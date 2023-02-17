@@ -2,9 +2,9 @@ library(rtracklayer)
 library(GenomicRanges)
 library(GenomicFeatures)
 library(plyr)
-ago11=read.table("E:/projects/miRNA/AGO1  HepG2.bed", sep="\t")
-ago12=read.table("E:/projects/miRNA/AGO1 K562.bed", sep="\t")
-ago2=read.table("E:/projects/miRNA/AGO2 HepG2.bed", sep="\t")
+ago11=read.table("AGO1  HepG2.bed", sep="\t")
+ago12=read.table("AGO1 K562.bed", sep="\t")
+ago2=read.table("AGO2 HepG2.bed", sep="\t")
 
 colnames(ago11)=c("chr","start","end")
 colnames(ago12)=c("chr","start","end")
@@ -13,12 +13,8 @@ colnames(ago2)=c("chr","start","end")
 ago11=GenomicRanges::makeGRangesFromDataFrame(fixchrs(ago11))
 ago12=GenomicRanges::makeGRangesFromDataFrame(fixchrs(ago12))
 ago2=GenomicRanges::makeGRangesFromDataFrame(fixchrs(ago2))
-mean(width(ago11))
-mean(width(ago12))
-mean(width(ago2))
 
-
-gtf_file_hg <-"E:/DATA/mm10/Nazar/Homo_sapiens.GRCh37.87.gtf"
+gtf_file_hg <-"Homo_sapiens.GRCh37.87.gtf"
 txdb <- makeTxDbFromGFF(gtf_file_hg, format="gtf")
 gs=genes(txdb)
 gs.tss=resize(gs, width=1, fix='start')
@@ -57,9 +53,6 @@ dim(dat2)
 for (i in 1:length(prots)){
   dat2[,i+1]=makenplot(prots[[i]],gs.tss,n,"AGO1 HepG2")[,2]
 }
-
-
-
 dat2[,1]=-n:n
 dat2=dat2[-10001,]
 
@@ -70,12 +63,6 @@ dat2[,4]=rollmean(dat2[,4], 7, na.pad=TRUE)
 library("ggpubr")
 library("ggplot2")
 colnames(dat2)=c("distance","AGO1_HepG2","AGO1_K562","AGO2_HepG2")
-p1=ggplot(dat2, aes(x=distance)) + 
-  geom_line(aes(y = AGO1_HepG2), color = "darkred")+labs(x = "")+ylim(1,NA)
-p2=ggplot(dat2, aes(x=distance)) + 
-    geom_line(aes(y = AGO1_K562), color="steelblue")+labs(x = "")+ylim(1,NA)
-p3=ggplot(dat2, aes(x=distance)) + 
-geom_line(aes(y = AGO2_HepG2), color="black")+ylim(1,NA)#+labs(x = "Distance to TSS")
 
 p1=ggplot(dat2, aes(x=distance)) + 
   geom_line(aes(y = AGO1_HepG2), color = "darkred")+labs(x = "")+ylim(0,25)
@@ -84,7 +71,6 @@ p2=ggplot(dat2, aes(x=distance)) +
 p3=ggplot(dat2, aes(x=distance)) + 
   geom_line(aes(y = AGO2_HepG2), color="black")+ylim(0,25)#+labs(x = "Distance to TSS")
 #####################################################################
-
 ggarrange(p1, p2, p3 + rremove("x.text"), 
           labels = c("A", "B", "C"),
           common.legend=T,
