@@ -1,7 +1,13 @@
+#import#################################################
 library(rtracklayer)
 library(GenomicRanges)
 library(GenomicFeatures)
 library(plyr)
+library(zoo)
+library(plyr)
+library("ggpubr")
+library("ggplot2")
+###################################################
 ago11=read.table("AGO1  HepG2.bed", sep="\t")
 ago12=read.table("AGO1 K562.bed", sep="\t")
 ago2=read.table("AGO2 HepG2.bed", sep="\t")
@@ -21,8 +27,7 @@ gs.tss=resize(gs, width=1, fix='start')
 #tss=gs.tss
 tss=transcripts(txdb)
 tss=resize(tss, width=1, fix='start')
-library(zoo)
-library(plyr)
+
 prot=prots[[1]]
 makenplot<-function(prot,tss,n,name){
   dat=data.frame(matrix(data=0,nrow=2*n+1,ncol=2))
@@ -37,10 +42,6 @@ makenplot<-function(prot,tss,n,name){
   ds=-ds
   distc=count(c(ds[ds>-n],dsf[dsf<n]))
   dat[as.character(distc$x),2]=distc$freq[na.omit(match(dat$X1,distc$x))]
-  #plot(dat$X1,rollmean(dat$X2, 7, na.pad=TRUE),type='l')
-  #hist(c(ds[ds>-500],dsf[dsf<500]),breaks = 1000)
-  #hist(c(ds[ds>-500],dsf[dsf<500]),breaks = 100)
-  #hist(c(ds[ds>-500],dsf[dsf<500]),breaks = 50)
   colnames(dat)=c("distance",name)
   return(dat)
 }
@@ -54,16 +55,22 @@ for (i in 1:length(prots)){
   dat2[,i+1]=makenplot(prots[[i]],gs.tss,n,"AGO1 HepG2")[,2]
 }
 dat2[,1]=-n:n
-dat2=dat2[-10001,]
+dat2=dat2[-(n+1),]
+#norm###################################
+dat2[,2]=dat2[,2]/length(ago11)
+dat2[,3]=dat2[,3]/length(ago12)
+dat2[,4]=dat2[,4]/length(ago2)
+    
+dat2[,2:4]=dat2[,2:4]*10000
+#smooth######################################
 
 dat2[,2]=rollmean(dat2[,2], 7, na.pad=TRUE)
 dat2[,3]=rollmean(dat2[,3], 7, na.pad=TRUE)
 dat2[,4]=rollmean(dat2[,4], 7, na.pad=TRUE)
 
-library("ggpubr")
-library("ggplot2")
-colnames(dat2)=c("distance","AGO1_HepG2","AGO1_K562","AGO2_HepG2")
 
+colnames(dat2)=c("distance","AGO1_HepG2","AGO1_K562","AGO2_HepG2")
+#plot#######################################################################33
 p1=ggplot(dat2, aes(x=distance)) + 
   geom_line(aes(y = AGO1_HepG2), color = "darkred")+labs(x = "")+ylim(0,25)
 p2=ggplot(dat2, aes(x=distance)) + 
